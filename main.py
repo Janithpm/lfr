@@ -14,32 +14,39 @@ WHITE_VALUE = 25
 BLACK_VALUE = 8
 TURN_ANGLE = 2
 DRIVE_SPEED = 20
-ALPHA = 0.1  # Learning rate
-EPSILON = 1  # Exploration rate
-GAMMA = 0.9  # Discount factor
+ALPHA = 0.1
+EPSILON = 1
+GAMMA = 0.9
 E=2.7321
 TEMP=1000
+Q_TABLE_FILE = 'q_table.pkl'
+TRAINING = True
 
+FORWARD = 'FORWARD'
+BACKWARD = 'BACKWARD'
 
-# Initialize hardware components
+light_states = ['WHITE','MIDDLE','BLACK']
+m_y = [('MIDDLE','turn_right','BLACK'),('BLACK','turn_left','MIDDLE'),('MIDDLE','turn_left','WHITE'),('WHITE','turn_right','MIDDLE')]
+m_x = [('MIDDLE','turn_right','WHITE'),('WHITE','turn_left','MIDDLE'),('MIDDLE','turn_left','BLACK'),('BLACK','turn_right','MIDDLE')]
+direction_states = [FORWARD, BACKWARD]
+
 ev3 = EV3Brick()
-left_motor = Motor(Port.C)
-right_motor = Motor(Port.B)
+left_motor = Motor(Port.B)
+right_motor = Motor(Port.C)
 light_sensor = ColorSensor(Port.S3)
 ir_sensor = InfraredSensor(Port.S4)
 robot = DriveBase(left_motor, right_motor, wheel_diameter=40, axle_track=50)
 
-# utility functions
 def save_q_dict(q_dict):
     temp = {}
     for key,value in q_dict.items():
         temp[(key[0],key[1],key[2].__name__)] = value
-    with open('q_dict_v1.pkl', 'wb') as file:
+    with open(Q_TABLE_FILE, 'wb') as file:
         pickle.dump(temp, file)
        
 def load_q_dict():
     # Reading the dictionary from the file
-    with open('q_table_v1.pkl', 'rb') as file:
+    with open(Q_TABLE_FILE, 'rb') as file:
         temp = pickle.load(file)
     q_dict = {}
     for key,value in temp.items():
@@ -54,7 +61,6 @@ def get_light_state():
         return 'BLACK'
     return 'MIDDLE'
 
-# Robot actions
 def forward(robot, previous_light_state):
     robot.drive(100,0)
     wait(250) 
@@ -73,27 +79,16 @@ def turn_right(robot,previous_light_state):
         robot.drive(10,110)
         wait(100) 
 
+def obstacle_aviodance():
+    robot.stop()
+    robot.drive_time(-80, 0, 1000)
+    robot.drive_time(0, 100, 1500)
+    robot.drive_time(-80, 0, 1000)
+    robot.drive_time(0, 100, 1000)
+
 actions = [forward, backward, turn_left, turn_right]
 modes = [True,False]
 
-light_states = ['WHITE','MIDDLE','BLACK']
-m_y = [('MIDDLE','turn_right','BLACK'),('BLACK','turn_left','MIDDLE'),('MIDDLE','turn_left','WHITE'),('WHITE','turn_right','MIDDLE')]
-m_x = [('MIDDLE','turn_right','WHITE'),('WHITE','turn_left','MIDDLE'),('MIDDLE','turn_left','BLACK'),('BLACK','turn_right','MIDDLE')]
-
-FORWARD = 'FORWARD'
-BACKWARD = 'BACKWARD'
-
-direction_states = [FORWARD, BACKWARD]
-
-# Initialize Q-table
-Q_table = {}
-for mode in modes:
-    for act in actions:
-        for light in light_states:
-            for direction in direction_states:
-                Q_table[(mode, light, act, direction)] = 0
-
-# Get reward for a given state
 def get_reward(new_light_state, direction):
     if new_light_state in ['BLACK', 'WHITE']:
         return -10 
@@ -103,17 +98,37 @@ def get_reward(new_light_state, direction):
         return 5
     else:
         return 10
+
+Q_table = {}
+for mode in modes:
+    for act in actions:
+        for light in light_states:
+            Q_table[(mode,light, act)] = 0
+
+# # Get reward for a given state
+# def get_reward(light_state):
+#     return -10 if light_state in ['BLACK','WHITE'] else 10
  
 # Get best action for a given state
-def get_best_action(Q_table, mode, light_state, direction):
+def get_best_action(Q_table, mode, light_state):
     max_q = -float("inf")
     best_action = None
     for act in actions:
-        q = Q_table[(mode, light_state, act, direction)]
+        q = Q_table[(mode, light_state, act)]
         if q > max_q:
             best_action = act
             max_q = q
     return best_action, max_q
+ 
+# def get_best_action(Q_table, mode, light_state, direction):
+#     max_q = -float("inf")
+#     best_action = None
+#     for act in actions:
+#         q = Q_table[(mode, light_state, act, direction)]
+#         if q > max_q:
+#             best_action = act
+#             max_q = q
+#     return best_action, max_q
 
 def learn():
     light_state = get_light_state()
@@ -122,7 +137,7 @@ def learn():
     action = None
     direction = FORWARD
 
-    rOrG = 'r'
+    rOrG = 'random'
     
     while True:
         # Exploration vs. Exploitation
@@ -132,12 +147,12 @@ def learn():
             break
         
         if random.uniform(0, 1) <  E**(iterations/-TEMP):
-            action = random.choice(actions)  # Explore by choosing a random action
-            rOrG = 'r'
-            print("random", action.__name__, mode)
+            action = random.choice(actions)
+            rOrG = 'random'
+            print("random", action.__name__, mode, light_state)
         else:
-            action = get_best_action(Q_table, mode,light_state, direction)[0]  # Exploit by choosing the action with the highest Q-value
-            rOrG = 'g'
+            action = get_best_action(Q_table, mode,light_state)[0]
+            rOrG = 'greedy'
             print("greedy", action.__name__ , mode)
 
         action(robot, light_state)  # Execute the action and wait for the robot to finish
@@ -155,19 +170,20 @@ def learn():
             new_mode = False
 
         # Calculate max Q-value for the new state
-        max_q_next = get_best_action(Q_table, new_mode, new_light_state, direction)[1]
+        max_q_next = get_best_action(Q_table, new_mode, new_light_state)[1]
 
         # Calculate reward for the new state
         reward_next = get_reward(new_light_state, direction)
 
         # Update Q-table
-        Q_table[(mode, light_state, action, direction)] += ALPHA * (reward_next + GAMMA * max_q_next - Q_table[( mode, light_state, action, direction)])
+        Q_table[(mode, light_state, action)] += ALPHA * (reward_next + GAMMA * max_q_next - Q_table[( mode, light_state, action)])
 
         # Print iteration number on the EV3 screen
         ev3.screen.clear()
         ev3.screen.draw_text(20,20,iterations)
-        ev3.screen.draw_text(20,50,E**(iterations/-TEMP))
-        ev3.screen.draw_text(20,80,rOrG)
+        ev3.screen.draw_text(20,40,E**(iterations/-TEMP))
+        ev3.screen.draw_text(20,60,rOrG)
+        ev3.screen.draw_text(20,80,action.__name__)
         
 
         light_state = new_light_state
@@ -176,9 +192,14 @@ def learn():
 
         save_q_dict(Q_table)
 
-def line_following(Q_table, mode, light_state, direction):
-    action = get_best_action(Q_table, mode,light_state, direction)[0]  # Choose the action with the highest Q-value
-    print("line following",mode, action.__name__, light_state, direction)
+def line_following(Q_table, mode, light_state):
+    action = get_best_action(Q_table, mode,light_state)[0]  # Choose the action with the highest Q-value
+    print("line following",mode, action.__name__, light_state)
+
+    ev3.screen.clear()
+    ev3.screen.draw_text(20,20,"LF")
+    ev3.screen.draw_text(20,40,action.__name__)
+
 
     action(robot, light_state)  # Execute the action and wait for the robot to finish
     new_light_state = get_light_state() # Observe new state
@@ -192,7 +213,6 @@ def line_following(Q_table, mode, light_state, direction):
         mode = True
     elif ((light_state,action.__name__,new_light_state) in m_y):
         mode = False
-    
 
     return mode, new_light_state
 
@@ -204,6 +224,7 @@ def run():
     # Load Q-table
     Q_table = load_q_dict()
     print(Q_table)
+
 
     # Find mode
     action = turn_right
@@ -219,11 +240,9 @@ def run():
     while True:
         if (ir_sensor.distance() < 15):
             print("obstacle")
-            robot.stop()
+            obstacle_aviodance()
         else:
-            mode, light_state = line_following(Q_table, mode, light_state, direction)
-
-TRAINING = True
+            mode, light_state = line_following(Q_table, mode, light_state)
 
 if(TRAINING):
     learn()
