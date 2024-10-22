@@ -89,15 +89,33 @@ def obstacle_aviodance():
 actions = [forward, backward, turn_left, turn_right]
 modes = [True,False]
 
-def get_reward(new_light_state, direction):
+# def get_reward(new_light_state, direction):
+#     if new_light_state in ['BLACK', 'WHITE']:
+#         return -10 
+#     elif direction == FORWARD:
+#         return 15
+#     elif direction == BACKWARD:
+#         return 5
+#     else:
+#         return 10
+
+def get_reward(previous_light_state, new_light_state, direction):
     if new_light_state in ['BLACK', 'WHITE']:
         return -10 
-    elif direction == FORWARD:
+    if previous_light_state == 'MIDDLE' and direction == FORWARD and new_light_state == 'MIDDLE':
         return 15
-    elif direction == BACKWARD:
-        return 5
-    else:
+    if previous_light_state == 'MIDDLE' and direction == BACKWARD and new_light_state == 'MIDDLE':
+        return -10
+    if previous_light_state in ['BLACK', 'WHITE'] and direction == FORWARD and new_light_state in ['BLACK', 'WHITE']:
+        return -12
+    if previous_light_state in ['BLACK', 'WHITE'] and direction == BACKWARD and new_light_state in ['BLACK', 'WHITE']:
+        return -12
+    if previous_light_state in ['BLACK', 'WHITE'] and direction == FORWARD and new_light_state == 'MIDDLE':
         return 10
+    if previous_light_state in ['BLACK', 'WHITE'] and direction == BACKWARD and new_light_state == 'MIDDLE':
+        return 10
+    
+    return 0 
 
 Q_table = {}
 for mode in modes:
@@ -132,6 +150,7 @@ def get_best_action(Q_table, mode, light_state):
 
 def learn():
     light_state = get_light_state()
+    previous_light_state = light_state 
     mode = True
     iterations = 0
     action = None
@@ -173,7 +192,7 @@ def learn():
         max_q_next = get_best_action(Q_table, new_mode, new_light_state)[1]
 
         # Calculate reward for the new state
-        reward_next = get_reward(new_light_state, direction)
+        reward_next = get_reward(previous_light_state, new_light_state, direction)
 
         # Update Q-table
         Q_table[(mode, light_state, action)] += ALPHA * (reward_next + GAMMA * max_q_next - Q_table[( mode, light_state, action)])
@@ -184,6 +203,7 @@ def learn():
         ev3.screen.draw_text(20,40,E**(iterations/-TEMP))
         ev3.screen.draw_text(20,60,rOrG)
         ev3.screen.draw_text(20,80,action.__name__)
+        ev3.screen.draw_text(20,100,reward_next)
         
 
         light_state = new_light_state
