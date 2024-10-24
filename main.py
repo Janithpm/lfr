@@ -20,7 +20,7 @@ GAMMA = 0.9
 E=2.7321
 TEMP=1000
 Q_TABLE_FILE = 'q_table.pkl'
-TRAINING = True
+TRAINING = False
 
 FORWARD = 'FORWARD'
 BACKWARD = 'BACKWARD'
@@ -80,11 +80,12 @@ def turn_right(robot,previous_light_state):
         wait(100) 
 
 def obstacle_aviodance():
-    robot.stop()
+    ev3.speaker.say("Obstacle detected")
     robot.drive_time(-80, 0, 1000)
-    robot.drive_time(0, 100, 1500)
-    robot.drive_time(-80, 0, 1000)
-    robot.drive_time(0, 100, 1000)
+    robot.drive_time(0, 100, 8000)  # Rotate 90 degrees
+    # robot.drive_time(0, 100, 2000)  # Rotate another 90 degrees to complete 180 degrees
+  
+  
 
 actions = [forward, backward, turn_left, turn_right]
 modes = [True,False]
@@ -258,9 +259,11 @@ def run():
 
     # Run
     while True:
-        if (ir_sensor.distance() < 15):
+        if (ir_sensor.distance() < 20):
+            robot.stop()
             print("obstacle")
             obstacle_aviodance()
+            
         else:
             mode, light_state = line_following(Q_table, mode, light_state)
 
