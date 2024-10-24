@@ -37,14 +37,14 @@ class STRATEGY:
 STATE_TRANSITIONS = {
     'INNER' : [
         (LIGHT_STATE.MIDDLE, 'turn_right', LIGHT_STATE.WHITE),
-        (LIGHT_STATE.BLACK, 'turn_right', LIGHT_STATE.MIDDLE)
+        (LIGHT_STATE.BLACK, 'turn_right', LIGHT_STATE.MIDDLE),
         (LIGHT_STATE.WHITE, 'turn_left', LIGHT_STATE.MIDDLE),
         (LIGHT_STATE.MIDDLE, 'turn_left', LIGHT_STATE.BLACK)
     ],
     'OUTER' : [
         (LIGHT_STATE.MIDDLE, 'turn_right', LIGHT_STATE.BLACK),
         (LIGHT_STATE.WHITE, 'turn_right', LIGHT_STATE.MIDDLE),
-        (LIGHT_STATE.BLACK, 'turn_left', LIGHT_STATE.MIDDLE)
+        (LIGHT_STATE.BLACK, 'turn_left', LIGHT_STATE.MIDDLE),
         (LIGHT_STATE.MIDDLE, 'turn_left', LIGHT_STATE.WHITE)
     ]
 }
