@@ -111,22 +111,15 @@ def get_light_state():
         return LIGHT_STATE.BLACK
     return LIGHT_STATE.MIDDLE
 
-def get_reward(previous_light_state, new_light_state, direction):
+def get_reward(new_light_state, direction):
     if new_light_state in [LIGHT_STATE.BLACK, LIGHT_STATE.BLACK]:
         return -10 
-    if previous_light_state == LIGHT_STATE.MIDDLE and direction == DIRECTION.FORWARD and new_light_state == LIGHT_STATE.MIDDLE:
+    elif direction == DIRECTION.FORWARD:
         return 15
-    if previous_light_state == LIGHT_STATE.MIDDLE and direction == DIRECTION.BACKWARD and new_light_state == LIGHT_STATE.MIDDLE:
-        return -10
-    if previous_light_state in [LIGHT_STATE.BLACK, LIGHT_STATE.BLACK] and direction == DIRECTION.FORWARD and new_light_state in [LIGHT_STATE.BLACK, LIGHT_STATE.BLACK]:
-        return -12
-    if previous_light_state in [LIGHT_STATE.BLACK, LIGHT_STATE.BLACK] and direction == DIRECTION.BACKWARD and new_light_state in [LIGHT_STATE.BLACK, LIGHT_STATE.BLACK]:
-        return -12
-    if previous_light_state in [LIGHT_STATE.BLACK, LIGHT_STATE.BLACK] and direction == DIRECTION.FORWARD and new_light_state == LIGHT_STATE.MIDDLE:
+    elif direction == DIRECTION.BACKWARD:
+        return 5
+    else:
         return 10
-    if previous_light_state in [LIGHT_STATE.BLACK, LIGHT_STATE.BLACK] and direction == DIRECTION.BACKWARD and new_light_state == LIGHT_STATE.MIDDLE:
-        return 10
-    return 0 
 
 def get_best_action(Q_table, mode, light_state):
     max_q = -float("inf")
@@ -180,7 +173,7 @@ def learn():
         new_mode = get_mode(light_state, new_light_state, action, mode)
 
         max_q_next = get_best_action(Q_table, new_mode, new_light_state)[1]
-        reward_next = get_reward(previous_light_state, new_light_state, direction)
+        reward_next = get_reward(new_light_state, direction)
         Q_table[(mode, light_state, action)] += LEARNING_RATE * (reward_next + DISCOUNT_FACTOR * max_q_next - Q_table[( mode, light_state, action)])
 
         ev3.screen.clear()
