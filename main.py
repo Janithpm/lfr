@@ -71,11 +71,11 @@ def load_qtable():
         table[(key[0],key[1],globals()[key[2]])] = value
     return table
 
-def forward(robot):
+def forward(robot, previous_light_state):
     robot.drive(100,0)
     wait(250) 
 
-def backward(robot):
+def backward(robot, previous_light_state):
     robot.drive(-100, 0)
     wait(250)
 
@@ -100,8 +100,8 @@ actions = [forward, backward, turn_left, turn_right]
 Q_table = {}
 for mode in [MODE.INNER_LINE, MODE.OUTER_LINE]:
     for act in actions:
-        for light in [LIGHT_STATE.BLACK, LIGHT_STATE.BLACK]:
-            Q_table[(mode,light, act)] = 0
+        for light in [LIGHT_STATE.BLACK, LIGHT_STATE.WHITE, LIGHT_STATE.MIDDLE]:
+            Q_table[(mode, light, act)] = 0
 
 def get_light_state():
     light = light_sensor.reflection()
