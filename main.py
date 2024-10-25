@@ -31,9 +31,9 @@ m_x = [('MIDDLE','turn_right','WHITE'),('WHITE','turn_left','MIDDLE'),('MIDDLE',
 direction_states = [FORWARD, BACKWARD]
 
 ev3 = EV3Brick()
-left_motor = Motor(Port.B)
-right_motor = Motor(Port.C)
-light_sensor = ColorSensor(Port.S3)
+left_motor = Motor(Port.A)
+right_motor = Motor(Port.D)
+light_sensor = ColorSensor(Port.S1)
 ir_sensor = InfraredSensor(Port.S4)
 robot = DriveBase(left_motor, right_motor, wheel_diameter=40, axle_track=50)
 
