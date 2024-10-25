@@ -90,7 +90,7 @@ def turn_right(robot,previous_light_state):
         wait(100) 
 
 def obstacle_aviodance():
-    ev3.speaker.say("An obstacle detected.")
+    ev3.speaker.say("Obstacle detected.")
     ev3.speaker.say("Turning back.")
     robot.drive_time(-80, 0, 1000)
     robot.drive_time(0, 100, 8000)
