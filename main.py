@@ -71,11 +71,11 @@ def load_qtable():
         table[(key[0],key[1],globals()[key[2]])] = value
     return table
 
-def forward(robot):
+def forward(robot, previous_light_state):
     robot.drive(100,0)
     wait(250) 
 
-def backward(robot):
+def backward(robot, previous_light_state):
     robot.drive(-100, 0)
     wait(250)
 
@@ -90,8 +90,7 @@ def turn_right(robot,previous_light_state):
         wait(100) 
 
 def obstacle_aviodance():
-    ev3.speaker.say("An obstacle detected.")
-    ev3.speaker.say("Turning back.")
+    ev3.speaker.say("Obstacle detected. Turning back.")
     robot.drive_time(-80, 0, 1000)
     robot.drive_time(0, 100, 8000)
   
