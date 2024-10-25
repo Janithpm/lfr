@@ -50,9 +50,9 @@ STATE_TRANSITIONS = {
 }
 
 ev3 = EV3Brick()
-left_motor = Motor(Port.B)
-right_motor = Motor(Port.C)
-light_sensor = ColorSensor(Port.S3)
+left_motor = Motor(Port.A)
+right_motor = Motor(Port.D)
+light_sensor = ColorSensor(Port.S1)
 ir_sensor = InfraredSensor(Port.S4)
 robot = DriveBase(left_motor, right_motor, wheel_diameter=40, axle_track=50)
 
@@ -99,8 +99,8 @@ actions = [forward, backward, turn_left, turn_right]
 Q_table = {}
 for mode in [MODE.INNER_LINE, MODE.OUTER_LINE]:
     for act in actions:
-        for light in [LIGHT_STATE.BLACK, LIGHT_STATE.BLACK]:
-            Q_table[(mode,light, act)] = 0
+        for light in [LIGHT_STATE.BLACK, LIGHT_STATE.WHITE, LIGHT_STATE.MIDDLE]:
+            Q_table[(mode, light, act)] = 0
 
 def get_light_state():
     light = light_sensor.reflection()
