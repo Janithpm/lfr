@@ -199,7 +199,7 @@ def line_following(Q_table, mode, light_state):
     print("line following",mode, action.__name__, light_state)
 
     ev3.screen.clear()
-    ev3.screen.draw_text(20,20,"LF")
+    ev3.screen.draw_text(20,20,"Following the line..!")
     ev3.screen.draw_text(20,40,action.__name__)
 
 
