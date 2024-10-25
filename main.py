@@ -80,7 +80,8 @@ def turn_right(robot,previous_light_state):
         wait(100) 
 
 def obstacle_aviodance():
-    ev3.speaker.say("Obstacle detected")
+    ev3.speaker.say("Obstacle detected.")
+    ev3.speaker.say("Turning back.")
     robot.drive_time(-80, 0, 1000)
     robot.drive_time(0, 100, 8000)  # Rotate 90 degrees
     # robot.drive_time(0, 100, 2000)  # Rotate another 90 degrees to complete 180 degrees
